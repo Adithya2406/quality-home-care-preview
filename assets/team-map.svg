@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 520" role="img" aria-labelledby="title desc">
+<title id="title">Healthcare access should not depend on your address</title>
+<desc id="desc">Schematic tri-state map showing New Jersey, New York, Pennsylvania, and Leonia, New Jersey.</desc>
+<defs><pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0H0V34" fill="none" stroke="#fff" stroke-opacity=".14"/></pattern></defs>
+<path fill="#671019" d="M0 0h1080v520H0z"/><path fill="url(#grid)" d="M0 0h1080v520H0z"/>
+<g stroke="#fff" stroke-width="3" stroke-linejoin="round">
+<path fill="#9d4850" d="M30 103 124 89 152 129 211 153 239 188 289 210 273 240 258 289 278 321 242 370 222 410 144 446 30 455Z"/>
+<path fill="#af5d64" d="M123 50 331 34 378 80 381 122 352 150 385 167 375 192 338 212 361 227 415 204 458 179 476 179 444 216 391 249 332 253 297 218 237 184 212 150 152 128Z"/>
+<path fill="#91151f" d="M292 212 332 253 319 282 339 301 337 359 309 411 270 455 244 466 225 414 242 370 278 321 258 289 274 240Z"/>
+</g>
+<g fill="#fff" font-family="Arial,sans-serif" font-weight="700"><text x="96" y="254" font-size="48">PA</text><text x="236" y="128" font-size="48">NY</text><text x="279" y="366" font-size="35">NJ</text>
+<circle cx="319" cy="249" r="18" fill="none" stroke="#fff" stroke-opacity=".65"/><circle cx="319" cy="249" r="7"/><path d="M332 262 443 308V481H348" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="78" y="460" width="270" height="43" rx="8" fill="#671019" stroke="#fff" stroke-opacity=".7" stroke-width="1.5"/>
+<text x="213" y="489" font-size="25" text-anchor="middle" letter-spacing="1.2">LEONIA, NJ</text>
+<text x="514" y="137" font-size="18" letter-spacing="4">CARE ACROSS THE TRI-STATE AREA</text>
+<text x="514" y="209" font-size="49" letter-spacing="-1">Healthcare access</text><text x="514" y="270" font-size="49" letter-spacing="-1">should not depend</text><text x="514" y="331" font-size="49" letter-spacing="-1">on your address.</text></g>
+<path d="M515 367h124" stroke="#f2aeb4" stroke-width="8"/><path d="M514 412h500" stroke="#fff" stroke-opacity=".35"/>
+<text x="514" y="447" fill="#fff" font-family="Arial,sans-serif" font-size="15" letter-spacing="2">QUALITY HOME CARE PROVIDERS</text>
+</svg>

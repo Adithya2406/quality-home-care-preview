@@ -1,2 +1,3 @@
-# quality-home-care-preview
-Public preview of the Quality Home Care Providers storefront redesign.
+# Quality Home Care Providers storefront preview
+
+Static storefront preview for GitHub Pages. Product and cart links lead to the existing Shopify storefront.
