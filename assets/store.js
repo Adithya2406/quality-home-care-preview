@@ -1,4 +1,174 @@
 (() => {
+  const shopOrigin = "https://qualityhomecareproviders.com";
+  const cartKey = "qhcp-preview-cart-v1";
+  const currency = new Intl.NumberFormat("en-US", {style: "currency", currency: "USD"});
+  const cartLinks = document.querySelectorAll(`.q-header a[href="${shopOrigin}/cart"]`);
+  const validQuantity = quantity => Number.isInteger(quantity) && quantity >= 1 && quantity <= 99;
+
+  function readCart() {
+    try {
+      const items = JSON.parse(localStorage.getItem(cartKey) || "[]");
+      if (!Array.isArray(items)) return [];
+      return items.filter(item => item && /^\d+$/.test(item.variant) &&
+        validQuantity(item.quantity) && Number.isSafeInteger(item.cents) && item.cents >= 0 &&
+        typeof item.title === "string" && typeof item.option === "string" &&
+        typeof item.page === "string" && /^product-[^/\\?#]+\.html$/.test(item.page));
+    } catch {
+      return [];
+    }
+  }
+
+  function updateCartLinks(items) {
+    const count = items.reduce((sum, item) => sum + item.quantity, 0);
+    for (const link of cartLinks) {
+      link.href = "cart.html";
+      link.textContent = count ? `Cart (${count})` : "Cart";
+    }
+  }
+
+  function saveCart(items) {
+    try {
+      localStorage.setItem(cartKey, JSON.stringify(items));
+      updateCartLinks(items);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function connectAddToCart(area, select, price, buy) {
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "q-btn";
+    add.textContent = "Add to cart";
+    const message = document.createElement("p");
+    message.setAttribute("role", "status");
+    const actions = document.createElement("div");
+    actions.className = "q-actions";
+    buy.before(actions);
+    actions.append(add, buy);
+    actions.after(message);
+    buy.classList.add("q-btn-line");
+
+    const syncAvailability = () => {
+      add.disabled = select ? select.selectedOptions[0]?.dataset.available !== "true" :
+        buy.textContent.startsWith("Check availability");
+      message.textContent = "";
+    };
+    select?.addEventListener("change", syncAvailability);
+    syncAvailability();
+
+    add.addEventListener("click", () => {
+      const choice = select?.selectedOptions[0];
+      const variant = new URL(buy.href).searchParams.get("variant");
+      const displayedPrice = price.textContent.trim();
+      const page = decodeURIComponent(location.pathname.split("/").pop());
+      if (!/^\d+$/.test(variant || "") || !/^\$[\d,]+\.\d{2}$/.test(displayedPrice)) {
+        message.textContent = "This item could not be added. You can check availability on Shopify.";
+        return;
+      }
+      const items = readCart();
+      const existing = items.find(item => item.variant === variant);
+      if (existing?.quantity === 99) {
+        message.textContent = "The maximum quantity for this item is 99.";
+        return;
+      }
+      if (existing) existing.quantity += 1;
+      else items.push({
+        variant,
+        quantity: 1,
+        cents: Number(displayedPrice.replace(/[^\d]/g, "")),
+        title: area.querySelector("h1").textContent.trim(),
+        option: choice?.textContent.trim() || "",
+        page,
+      });
+      if (!saveCart(items)) {
+        message.textContent = "Your browser could not save the cart. You can open this item on Shopify.";
+        return;
+      }
+      const view = document.createElement("a");
+      view.href = "cart.html";
+      view.className = "q-text-link";
+      view.textContent = "View cart";
+      message.replaceChildren("Added to cart. ", view);
+    });
+  }
+
+  function connectCart(cart) {
+    const empty = cart.querySelector("[data-cart-empty]");
+    const filled = cart.querySelector("[data-cart-filled]");
+    const lines = cart.querySelector("[data-cart-lines]");
+    const subtotal = cart.querySelector("[data-cart-total]");
+    const checkout = cart.querySelector("[data-cart-checkout]");
+    const message = cart.querySelector("[data-cart-message]");
+    const money = cents => currency.format(cents / 100);
+
+    function render(items = readCart()) {
+      empty.hidden = items.length > 0;
+      filled.hidden = items.length === 0;
+      lines.replaceChildren();
+      for (const item of items) {
+        const row = document.createElement("li");
+        row.className = "q-cart-line";
+        row.innerHTML = '<div><a class="q-text-link"></a><p></p></div><label>Quantity <input type="number" min="1" max="99" step="1"></label><strong></strong><button type="button" class="q-btn q-btn-line">Remove</button>';
+        const link = row.querySelector("a");
+        link.href = encodeURIComponent(item.page);
+        link.textContent = item.title;
+        row.querySelector("p").textContent = item.option ? `${item.option} · ${money(item.cents)} each` : `${money(item.cents)} each`;
+        row.querySelector("strong").textContent = money(item.cents * item.quantity);
+        const quantity = row.querySelector("input");
+        quantity.value = item.quantity;
+        quantity.setAttribute("aria-label", `Quantity for ${item.title}`);
+        quantity.addEventListener("change", () => {
+          const amount = quantity.valueAsNumber;
+          if (!validQuantity(amount)) {
+            quantity.value = item.quantity;
+            message.textContent = "Enter a whole number between 1 and 99.";
+            return;
+          }
+          const next = readCart().map(entry => entry.variant === item.variant ? {...entry, quantity: amount} : entry);
+          if (!saveCart(next)) {
+            quantity.value = item.quantity;
+            message.textContent = "The quantity could not be saved.";
+            return;
+          }
+          item.quantity = amount;
+          row.querySelector("strong").textContent = money(item.cents * amount);
+          updateSummary(next);
+          message.textContent = "Quantity updated.";
+        });
+        row.querySelector("button").addEventListener("click", () => {
+          const next = readCart().filter(entry => entry.variant !== item.variant);
+          if (!saveCart(next)) {
+            message.textContent = "The item could not be removed.";
+            return;
+          }
+          render(next);
+          message.textContent = "Item removed.";
+          (lines.querySelector("button") || empty.querySelector("a")).focus();
+        });
+        lines.append(row);
+      }
+      updateSummary(items);
+    }
+
+    function updateSummary(items) {
+      subtotal.textContent = money(items.reduce((total, item) => total + item.cents * item.quantity, 0));
+      if (items.length) checkout.href = `${shopOrigin}/cart/${items.map(item => `${item.variant}:${item.quantity}`).join(",")}`;
+      else checkout.removeAttribute("href");
+    }
+
+    render();
+    addEventListener("pageshow", () => render());
+    addEventListener("storage", event => { if (event.key === cartKey) render(); });
+  }
+
+  updateCartLinks(readCart());
+  addEventListener("pageshow", () => updateCartLinks(readCart()));
+  addEventListener("storage", event => { if (event.key === cartKey) updateCartLinks(readCart()); });
+  const cart = document.querySelector("[data-cart]");
+  if (cart) connectCart(cart);
+
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   for (const carousel of document.querySelectorAll("[data-carousel]")) {
     const track = carousel.querySelector("[data-track]");
@@ -49,6 +219,7 @@
         }
       });
     }
+    if (buy && price) connectAddToCart(area, select, price, buy);
     if (!select) continue;
     const update = () => {
       const choice = select.selectedOptions[0];
